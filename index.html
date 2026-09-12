@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portal de Reclutamiento</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-12">
+
+  <!-- PANTALLA LOGIN -->
+  <div id="view-login" class="min-h-screen flex items-center justify-center p-4 bg-slate-900">
+    <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Panel Reclutamiento</h1>
+        <p class="text-sm text-slate-500">Ingreso exclusivo para equipo interno</p>
+      </div>
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Correo electrónico</label>
+          <input type="email" id="login-email" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">PIN / Contraseña</label>
+          <input type="password" id="login-pin" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <button type="submit" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/30">
+          Iniciar Sesión
+        </button>
+      </form>
+      <p id="login-error" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+    </div>
+  </div>
+
+  <!-- PANTALLA PRINCIPAL DE LA APP -->
+  <div id="view-app" class="hidden">
+    <!-- Barra Superior -->
+    <header class="bg-slate-900 text-white p-4 sticky top-0 z-30 shadow-md flex justify-between items-center">
+      <div>
+        <h2 class="text-base font-bold leading-tight">Control de Citas</h2>
+        <span id="user-display" class="text-xs text-slate-400"></span>
+      </div>
+      <button onclick="logout()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700">Salir</button>
+    </header>
+
+    <!-- Navegación por pestañas -->
+    <div class="flex border-b bg-white sticky top-[57px] z-20">
+      <button onclick="switchTab('agenda')" id="tab-agenda" class="flex-1 py-3 text-center text-sm font-semibold border-b-2 border-blue-600 text-blue-600">Agenda Global</button>
+      <button onclick="switchTab('nueva')" id="tab-nueva" class="flex-1 py-3 text-center text-sm font-semibold border-b-2 border-transparent text-slate-500">Agendar Cita</button>
+    </div>
+
+    <!-- Pestaña 1: Agenda / Evitar Empalmes -->
+    <main id="content-agenda" class="p-4 max-w-lg mx-auto space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Citas Programadas</h3>
+        <button onclick="cargarDatos()" class="text-xs text-blue-600 font-medium">Actualizar ⟳</button>
+      </div>
+      <div id="lista-citas" class="space-y-2">
+        <p class="text-sm text-slate-400 text-center py-6">Cargando agenda...</p>
+      </div>
+    </main>
+
+    <!-- Pestaña 2: Formulario Nueva Cita -->
+    <main id="content-nueva" class="hidden p-4 max-w-lg mx-auto">
+      <form id="form-cita" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <h3 class="text-base font-bold text-slate-800">Registrar Candidato</h3>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Reclutador</label>
+          <input type="text" id="campo-reclutador" required class="w-full px-3 py-2 border rounded-lg bg-slate-100" readonly>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre completo del candidato/a</label>
+          <input type="text" id="campo-candidato" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Puesto postulado</label>
+            <select id="campo-puesto" required class="w-full px-3 py-2 border rounded-lg bg-white outline-none">
+              <option value="Operador">Operador</option>
+              <option value="Técnico">Técnico</option>
+              <option value="Administrativo">Administrativo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal</label>
+            <select id="campo-sucursal" required class="w-full px-3 py-2 border rounded-lg bg-white outline-none">
+              <option value="Matriz">Matriz</option>
+              <option value="Norte">Norte</option>
+              <option value="Sur">Sur</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha entrevista</label>
+            <input type="date" id="campo-fecha" required class="w-full px-3 py-2 border rounded-lg outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Horario</label>
+            <input type="time" id="campo-horario" required class="w-full px-3 py-2 border rounded-lg outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+            <input type="tel" id="campo-telefono" required class="w-full px-3 py-2 border rounded-lg outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Modalidad</label>
+            <select id="campo-modalidad" required class="w-full px-3 py-2 border rounded-lg bg-white outline-none">
+              <option value="Presencial">Presencial</option>
+              <option value="Virtual">Virtual</option>
+              <option value="Telefónica">Telefónica</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Correo electrónico</label>
+          <input type="email" id="campo-correo" required class="w-full px-3 py-2 border rounded-lg outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Disponibilidad de días para trabajar</label>
+          <input type="text" id="campo-disponibilidad" placeholder="Ej. Lunes a Sábado, Rolar turnos" required class="w-full px-3 py-2 border rounded-lg outline-none">
+        </div>
+
+        <button type="submit" id="btn-guardar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-md">
+          Guardar Cita
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // PEGA AQUÍ LA URL DE TU WEB APP DE APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycbynAVwmDxgWy9ThHY7a4hrnFZgnZcmrhRYYf0QufnyJcAOZ_Ww1E-Gunw8v2B_wdIg9/exec";
+
+    let currentUser = JSON.parse(localStorage.getItem('user_session')) || null;
+
+    if (currentUser) {
+      iniciarSesionExitosa(currentUser);
+    }
+
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const pin = document.getElementById('login-pin').value;
+      const btn = document.getElementById('btn-login');
+      btn.innerText = 'Verificando...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'login', email, pin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('user_session', JSON.stringify(data.user));
+          iniciarSesionExitosa(data.user);
+        } else {
+          document.getElementById('login-error').innerText = data.message;
+          document.getElementById('login-error').classList.remove('hidden');
+        }
+      } catch (err) {
+        alert('Error al conectar con el servidor.');
+      } finally {
+        btn.innerText = 'Iniciar Sesión';
+      }
+    });
+
+    function iniciarSesionExitosa(user) {
+      currentUser = user;
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-app').classList.remove('hidden');
+      document.getElementById('user-display').innerText = `${user.nombre} (${user.rol})`;
+      document.getElementById('campo-reclutador').value = user.nombre;
+      cargarDatos();
+    }
+
+    function logout() {
+      localStorage.removeItem('user_session');
+      location.reload();
+    }
+
+    function switchTab(tab) {
+      if (tab === 'agenda') {
+        document.getElementById('content-agenda').classList.remove('hidden');
+        document.getElementById('content-nueva').classList.add('hidden');
+        document.getElementById('tab-agenda').className = "flex-1 py-3 text-center text-sm font-semibold border-b-2 border-blue-600 text-blue-600";
+        document.getElementById('tab-nueva').className = "flex-1 py-3 text-center text-sm font-semibold border-b-2 border-transparent text-slate-500";
+      } else {
+        document.getElementById('content-agenda').classList.add('hidden');
+        document.getElementById('content-nueva').classList.remove('hidden');
+        document.getElementById('tab-agenda').className = "flex-1 py-3 text-center text-sm font-semibold border-b-2 border-transparent text-slate-500";
+        document.getElementById('tab-nueva').className = "flex-1 py-3 text-center text-sm font-semibold border-b-2 border-blue-600 text-blue-600";
+      }
+    }
+
+    async function cargarDatos() {
+      const contenedor = document.getElementById('lista-citas');
+      contenedor.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Actualizando citas...</p>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'getCitas' })
+        });
+        const data = await res.json();
+        
+        if (data.success && data.citas.length > 0) {
+          contenedor.innerHTML = '';
+          data.citas.slice().reverse().forEach(c => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1";
+            card.innerHTML = `
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">${c.Sucursal || 'Sin sucursal'} • ${c.Modalidad}</span>
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">${c.Horario}</span>
+              </div>
+              <h4 class="font-bold text-slate-800">${c['Nombre Candidato']}</h4>
+              <p class="text-xs text-slate-500">Puesto: <span class="text-slate-700 font-medium">${c.Puesto}</span></p>
+              <div class="pt-2 border-t mt-2 flex justify-between items-center text-xs text-slate-400">
+                <span>Agendó: ${c.Reclutador}</span>
+                <span>${c['Fecha Entrevista'] ? c['Fecha Entrevista'].toString().substring(0,10) : ''}</span>
+              </div>
+            `;
+            contenedor.appendChild(card);
+          });
+        } else {
+          contenedor.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No hay citas registradas aún.</p>';
+        }
+      } catch (err) {
+        contenedor.innerHTML = '<p class="text-sm text-red-500 text-center py-4">Error al cargar la agenda.</p>';
+      }
+    }
+
+    document.getElementById('form-cita').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-guardar');
+      btn.innerText = 'Verificando y guardando...';
+      btn.disabled = true;
+
+      const cita = {
+        reclutador: document.getElementById('campo-reclutador').value,
+        candidato: document.getElementById('campo-candidato').value,
+        puesto: document.getElementById('campo-puesto').value,
+        sucursal: document.getElementById('campo-sucursal').value,
+        fechaEntrevista: document.getElementById('campo-fecha').value,
+        horario: document.getElementById('campo-horario').value,
+        telefono: document.getElementById('campo-telefono').value,
+        modalidad: document.getElementById('campo-modalidad').value,
+        correo: document.getElementById('campo-correo').value,
+        disponibilidad: document.getElementById('campo-disponibilidad').value,
+        nombreCandidato: document.getElementById('campo-candidato').value
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'guardarCita', cita })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('¡Cita registrada correctamente!');
+          document.getElementById('form-cita').reset();
+          document.getElementById('campo-reclutador').value = currentUser.nombre;
+          switchTab('agenda');
+          cargarDatos();
+        } else {
+          alert(data.message); // Muestra alerta si hubo empalme
+        }
+      } catch (err) {
+        alert('Error de conexión al guardar.');
+      } finally {
+        btn.innerText = 'Guardar Cita';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
